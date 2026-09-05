@@ -1,7 +1,8 @@
 import React from "react";
 
 // Hooks
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
+import { AppwriteContext } from "../src/appwrite/AppwriteContext";
 
 import {
   View,
@@ -17,6 +18,17 @@ import { useNavigation } from "@react-navigation/native";
 
 
 export default function Home() {
+
+   // ==============================
+  // 1. CONTEXT
+  // ==============================
+  const { appwrite } = useContext(AppwriteContext);
+
+   // ==============================
+  // 2. USER NAME STATE
+  // ==============================
+  const [userName, setUserName] = useState("");
+    
 
   // ==============================
   // 1. NAVIGATION
@@ -37,6 +49,34 @@ export default function Home() {
   const scaleAnim = useRef(
     new Animated.Value(0.8)
   ).current;
+
+   // ==============================
+  // 5. GET CURRENT USER
+  // ==============================
+  useEffect(() => {
+
+    const getUser = async () => {
+      try {
+
+        const user = await appwrite.getCurrentUser();
+
+        if (user) {
+          console.log("Logged in user:", user.name);
+
+          // Save actual logged-in user's name
+          setUserName(user.name);
+        }
+
+      } catch (error) {
+        console.log("Error getting user:", error);
+      }
+    };
+
+    getUser();
+
+  }, []);
+
+
 
 
   // ==============================
@@ -114,7 +154,7 @@ export default function Home() {
         </Text>
 
         <Text style={styles.welcomeText}>
-          Hey, Admin! 🎉
+            Hey, {userName || "User"}! 🎉
         </Text>
 
         <Text style={styles.subText}>

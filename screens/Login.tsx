@@ -1,6 +1,6 @@
 import { AppwriteContext } from "../src/appwrite/AppwriteContext";
-import { Alert } from "react-native";
-import React, { useState, useContext } from "react";
+import { Alert,Linking } from "react-native";
+import React, { useState, useContext,useEffect } from "react";
 
 
 import {
@@ -40,6 +40,82 @@ export default function Login({ navigation }: any) {
      
     }
   };
+
+
+  // ===============================
+// GOOGLE LOGIN
+// ===============================
+const handleGoogleLogin = async () => {
+  try {
+    console.log("Starting Google login...");
+
+    const authUrl = await appwrite.loginWithGoogle();
+
+    console.log("Opening Google login...");
+    await Linking.openURL(authUrl);
+
+  } catch (error) {
+    console.log("Google login error:", error);
+    Alert.alert("Google Login Failed");
+  }
+};
+
+// ===============================
+// HANDLE GOOGLE CALLBACK
+// ===============================
+useEffect(() => {
+
+  const handleDeepLink = async ({ url }: { url: string }) => {
+    try {
+      console.log("OAuth callback URL:", url);
+
+    const userIdMatch = url.match(/[?&]userId=([^&#]+)/);
+    const secretMatch = url.match(/[?&]secret=([^&#]+)/);
+    
+      const userId = userIdMatch?.[1];
+      const secret = secretMatch?.[1];
+
+      if (userId && secret) {
+
+        console.log("Google user received:", userId);
+
+        await appwrite.createGoogleSession(
+          decodeURIComponent(userId),
+          decodeURIComponent(secret)
+        );
+
+        console.log("Google login successful!");
+
+        setiSLoggedIn(true);
+      }
+
+    } catch (error) {
+      console.log("OAuth callback error:", error);
+      Alert.alert("Google authentication failed");
+    }
+  };
+
+
+  // App already open
+  const subscription = Linking.addEventListener(
+    "url",
+    handleDeepLink
+  );
+
+
+  // App was closed during OAuth
+  Linking.getInitialURL().then((url) => {
+    if (url) {
+      handleDeepLink({ url });
+    }
+  });
+
+
+  return () => {
+    subscription.remove();
+  };
+
+}, []);
 
 
 
@@ -90,7 +166,7 @@ export default function Login({ navigation }: any) {
           </View>
           <View style={styles.card2}>
 
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity style={styles.button} onPress={handleGoogleLogin}>
             <Image
                 source={require("../assets/google.png")}
                  style={styles.icon}

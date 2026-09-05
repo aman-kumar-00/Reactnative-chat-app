@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 
-import { Account, Client, ID } from 'appwrite';
+import { Account, Client, ID,OAuthProvider } from 'appwrite';
 import Config from 'react-native-config';
 
 
@@ -9,8 +9,8 @@ const client = new Client();
 
 client
   .setEndpoint(Config.APPWRITE_ENDPOINT!)
-  .setProject(Config.APPWRITE_PROJECT_ID!);
-
+  .setProject(Config.APPWRITE_PROJECT_ID!)
+  
 
 // Create Account instance
 const account = new Account(client);
@@ -30,6 +30,42 @@ type LoginUserAccount = {
 
 
 class AppwriteService {
+
+// Login with Google
+async loginWithGoogle() {
+  try {
+    
+    const redirectUrl = "appwrite-callback-69989370002b2b538f08://";
+
+    const authUrl = await account.createOAuth2Token({
+      provider: OAuthProvider.Google,
+      success: redirectUrl,
+      failure: redirectUrl,
+    });
+
+    return authUrl;
+
+  } catch (error) {
+    console.log("Google login error:", error);
+    throw error;
+  }
+}
+
+
+// Create session after Google OAuth callback
+async createGoogleSession(userId: string, secret: string) {
+  try {
+    const session = await account.createSession({
+      userId,
+      secret,
+    });
+
+    return session;
+  } catch (error) {
+    console.log("Create Google session error:", error);
+    throw error;
+  }
+}
 
   // 🟢 Create Account
   async createAccount({

@@ -30,6 +30,15 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="myapp" />
         </intent-filter>
+        <!-- Google OAuth Deep Link -->
+<intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+
+    <data android:scheme="appwrite-callback-69989370002b2b538f08" />
+</intent-filter>
       </activity>
     </application>
 </manifest>
