@@ -1,82 +1,227 @@
 import React from "react";
-import { useState,useEffect } from "react";
-import { View, Text,TextInput,TouchableOpacity,FlatList,StyleSheet,ScrollView,Image } from "react-native";
+
+// Hooks
+import { useEffect, useRef } from "react";
+
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Animated,
+} from "react-native";
+
 import LogoWithText from "./LogoWithText";
 import { useNavigation } from "@react-navigation/native";
-
-const logo  = { uri: 'https://reactnative.dev/img/tiny_logo.png'};
-const logo1 = {uri:'https://cdn-icons-png.flaticon.com/512/733/733579.png' };
-
 
 
 export default function Home() {
 
-    const navigation = useNavigation<any>();
+  // ==============================
+  // 1. NAVIGATION
+  // ==============================
+  const navigation = useNavigation<any>();
+
+
+  // ==============================
+  // 2. ANIMATION VALUES
+  // ==============================
+
+  // Starts invisible (0)
+  const fadeAnim = useRef(
+    new Animated.Value(0)
+  ).current;
+
+  // Starts slightly smaller (0.8)
+  const scaleAnim = useRef(
+    new Animated.Value(0.8)
+  ).current;
+
+
+  // ==============================
+  // 3. ANIMATION LOGIC
+  // ==============================
+
+  useEffect(() => {
+
+    Animated.sequence([
+
+      // Run fade + scale together
+      Animated.parallel([
+
+        // Fade in
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+
+        // Scale animation
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+
+      ]),
+
+      // Keep welcome message visible
+      Animated.delay(2000),
+
+      // Fade out
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+
+    ]).start();
+
+  }, []);
+
+
+  // ==============================
+  // 4. UI
+  // ==============================
+
   return (
 
-    
     <View style={styles.container}>
-      <ScrollView>
-      
-  
 
-       <LogoWithText
-      image={require("../assets/talking.png")}
-       title="chat"
-       onPress={() => navigation.navigate("Chatbox")}
-      />
 
+      {/* =========================
+          WELCOME ANIMATION
+      ========================= */}
+
+      <Animated.View
+        style={[
+          styles.welcomeContainer,
+
+          {
+            // Connect fade animation
+            opacity: fadeAnim,
+
+            // Connect scale animation
+            transform: [
+              { scale: scaleAnim }
+            ],
+          },
+        ]}
+      >
+
+        <Text style={styles.wave}>
+          👋
+        </Text>
+
+        <Text style={styles.welcomeText}>
+          Hey, Admin! 🎉
+        </Text>
+
+        <Text style={styles.subText}>
+          Welcome back
+        </Text>
+
+      </Animated.View>
+
+
+      {/* =========================
+          HOME CONTENT
+      ========================= */}
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+
+        {/* CHAT */}
         <LogoWithText
-      image={require("../assets/video-call.png")}
-       title="vc: soon"
-      />
+          image={require("../assets/talking.png")}
+          title="chat"
+          onPress={() => navigation.navigate("Chatbox")}
+        />
 
 
+        {/* VIDEO CALL */}
         <LogoWithText
-      image={require("../assets/ancestors.png")}
-       title="Public room"
-         onPress={() => navigation.navigate("Publicroom")}
-      />
+          image={require("../assets/video-call.png")}
+          title="vc: soon"
+        />
 
-      
+
+        {/* PUBLIC ROOM */}
+        <LogoWithText
+          image={require("../assets/ancestors.png")}
+          title="Public room"
+          onPress={() => navigation.navigate("Publicroom")}
+        />
+
       </ScrollView>
+
     </View>
   );
 }
 
 
+// ==============================
+// STYLES
+// ==============================
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
+
+  // Main full-screen container
   container: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "pink",
+  },
+
+
+  // Welcome popup overlay
+  welcomeContainer: {
+    position: "absolute",
+    top: 60,
+    alignSelf: "center",
     alignItems: "center",
-    backgroundColor:"pink"
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 8,
-  },
 
-  logo:{
-    width:64,
-    height:64,
-    margin:64,
-    resizeMode: "contain",
-    alignSelf: "center"
-  },
-
-  card: {
     backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 64,
-    marginBottom: 60,
-    elevation: 4
+
+    padding: 20,
+    borderRadius: 20,
+
+    elevation: 5,
+
+    // Keeps popup above other UI
+    zIndex: 10,
   },
+
+
+  // Waving emoji
+  wave: {
+    fontSize: 45,
+  },
+
+
+  // "Hey Admin!"
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginTop: 5,
+  },
+
+
+  // "Welcome back"
+  subText: {
+    fontSize: 14,
+    marginTop: 4,
+    color: "#666",
+  },
+
+
+  // ScrollView content
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 30,
+  },
+
 });
