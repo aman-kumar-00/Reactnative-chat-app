@@ -34,6 +34,8 @@ const Chatbox = () => {
   const receiverId =
     route.params?.receiverId;
 
+    const receiverName = route.params?.receiverName;
+
 
   const { appwrite } =
     useContext(AppwriteContext);
@@ -47,6 +49,9 @@ const Chatbox = () => {
 
   const [currentUserId, setCurrentUserId] =
     useState("");
+
+  const [currentUserName, setCurrentUserName] =
+  useState("");
 
 
   // -------------------------
@@ -62,11 +67,15 @@ const Chatbox = () => {
         const user =
           await appwrite.getCurrentUser();
 
-        if (user) {
+       if (user) {
 
-          setCurrentUserId(user.$id);
+  setCurrentUserId(user.$id);
 
-        }
+  setCurrentUserName(
+    user.name || "Unknown User"
+  );
+
+}
 
       } catch (error) {
 
@@ -130,59 +139,75 @@ const Chatbox = () => {
   }, [currentUserId, receiverId]);
 
 
-  // -------------------------
-  // REALTIME
-  // -------------------------
+ // ===============================
+// REALTIME MESSAGE LISTENER
+// ===============================
 
-  useEffect(() => {
+useEffect(() => {
 
-    if (!currentUserId || !receiverId) {
-      return;
-    }
+  if (!currentUserId || !receiverId) {
+    return;
+  }
 
+  console.log("Starting private chat realtime...");
 
-    const unsubscribe =
-      databaseService.subscribeToMessages(
-        currentUserId,
-        receiverId,
-        (msg: any) => {
+  const unsubscribe =
+    databaseService.subscribeToMessages(
+      currentUserId,
+      receiverId,
 
-          setMessages(prev => {
+      (msg: any) => {
 
-            const exists =
-              prev.some(
-                m => m.$id === msg.$id
-              );
+        console.log(
+          "Realtime message received:",
+          msg
+        );
 
+        const isCurrentConversation =
+          (
+            msg.senderid === currentUserId &&
+            msg.receiverid === receiverId
+          )
+          ||
+          (
+            msg.senderid === receiverId &&
+            msg.receiverid === currentUserId
+          );
 
-            if (exists) {
-              return prev;
-            }
-
-
-            return [
-              ...prev,
-              msg
-            ];
-
-          });
-
+        if (!isCurrentConversation) {
+          console.log(
+            "Ignoring message from another conversation"
+          );
+          return;
         }
-      );
 
+        setMessages(prev => {
 
-    return () => {
+          const exists = prev.some(
+            item => item.$id === msg.$id
+          );
 
-      if (unsubscribe) {
-        unsubscribe();
+          if (exists) {
+            return prev;
+          }
+
+          return [...prev, msg];
+        });
+
       }
+    );
 
-    };
+  return () => {
 
-  }, [
-    currentUserId,
-    receiverId
-  ]);
+    console.log(
+      "Stopping private chat realtime..."
+    );
+
+    unsubscribe?.();
+
+  };
+
+}, [currentUserId, receiverId]);
 
 
   // -------------------------
@@ -198,11 +223,18 @@ const Chatbox = () => {
 
     try {
 
+       console.log("========== SENDING MESSAGE ==========");
+    console.log("Sender ID:", currentUserId);
+    console.log("Receiver ID:", receiverId);
+    console.log("Message:", text.trim());
+
+
       await databaseService.sendMessage(
-        currentUserId,
-        receiverId,
-        text.trim()
-      );
+  currentUserId,
+  currentUserName,
+  receiverId,
+  text.trim()
+);
 
       setText("");
 
@@ -305,7 +337,7 @@ const Chatbox = () => {
         <View style={styles.headerInfo}>
 
           <Text style={styles.headerTitle}>
-            Chat
+            {receiverName || "Chat"}
           </Text>
 
           <Text style={styles.headerStatus}>

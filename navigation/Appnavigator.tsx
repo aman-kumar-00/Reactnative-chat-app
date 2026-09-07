@@ -6,6 +6,7 @@ import Camera from "../screens/Camera";
 import Chatbox from "../screens/Chatbox";
 import LogoWithText from "../components/LogoWithText";
 import Publicroom from "../screens/Publicroom";
+import Users from "../screens/Users";
 
 
 const Stack = createNativeStackNavigator();
@@ -20,6 +21,7 @@ export default function Appnavigator() {
       <Stack.Screen name="Camera" component={Camera} />
       <Stack.Screen name = "Chatbox" component={Chatbox}/>
       <Stack.Screen name ="Publicroom" component={Publicroom}/>
+      <Stack.Screen name ="Users" component={Users}/>
 
       
     </Stack.Navigator>

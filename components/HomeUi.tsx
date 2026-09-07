@@ -177,7 +177,7 @@ export default function Home() {
         <LogoWithText
           image={require("../assets/talking.png")}
           title="chat"
-          onPress={() => navigation.navigate("Chatbox")}
+          onPress={() => navigation.navigate("Users")}
         />
 
 

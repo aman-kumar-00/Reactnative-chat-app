@@ -2,6 +2,7 @@ import 'react-native-url-polyfill/auto';
 
 import { Account, Client, ID,OAuthProvider } from 'appwrite';
 import Config from 'react-native-config';
+import databaseService from './databaseService';
 
 
 // Create Client
@@ -52,20 +53,88 @@ async loginWithGoogle() {
 }
 
 
-// Create session after Google OAuth callback
-async createGoogleSession(userId: string, secret: string) {
+// =====================================
+// CREATE SESSION AFTER GOOGLE CALLBACK
+// =====================================
+
+async createGoogleSession(
+  userId: string,
+  secret: string
+) {
+
   try {
-    const session = await account.createSession({
-      userId,
-      secret,
-    });
+
+    // Create Appwrite session
+    const session =
+      await account.createSession({
+        userId,
+        secret,
+      });
+
+
+    // =====================================
+    // SYNC GOOGLE USER TO USERS TABLE
+    // =====================================
+
+    await this.syncUserProfile();
+
+
+    console.log(
+      "Google user profile synced"
+    );
+
 
     return session;
+
   } catch (error) {
-    console.log("Create Google session error:", error);
+
+    console.log(
+      "Create Google session error:",
+      error
+    );
+
+    throw error;
+
+  }
+
+}
+
+
+// =====================================
+// SYNC CURRENT USER TO USERS TABLE
+// =====================================
+
+async syncUserProfile() {
+  try {
+
+    // Get currently authenticated user
+    const user = await account.get();
+
+    // Create user profile in database
+    await databaseService.createUserProfile(
+      user.$id,
+      user.name || "User"
+    );
+
+    console.log(
+      "User profile synced:",
+      user.name
+    );
+
+    return user;
+
+  } catch (error) {
+
+    console.log(
+      "User profile sync error:",
+      error
+    );
+
     throw error;
   }
 }
+
+
 
   // 🟢 Create Account
   async createAccount({
@@ -106,34 +175,55 @@ async createGoogleSession(userId: string, secret: string) {
 
 
   // 🟢 Login
-  async login({
-    email,
-    password
-  }: LoginUserAccount) {
+ 
+  // =====================================
+// LOGIN WITH EMAIL AND PASSWORD
+// =====================================
 
+async login({
+  email,
+  password
+}: LoginUserAccount) {
+
+  try {
+
+    // Remove old session if it exists
     try {
 
-      // Remove old session if exists
-      try {
-        await account.deleteSession("current");
-      } catch (e) {
-        // Ignore if no session
-      }
+      await account.deleteSession("current");
 
-      return await account.createEmailPasswordSession(
+    } catch (e) {
+
+      // Ignore if there is no previous session
+    }
+
+
+    // Create new session
+    const session =
+      await account.createEmailPasswordSession(
         email.trim(),
         password.trim()
       );
 
-    } catch (error) {
 
-      console.log("Login error:", error);
-      throw error;
+    // =====================================
+    // SYNC USER TO USERS TABLE
+    // =====================================
 
-    }
+    await this.syncUserProfile();
+
+
+    return session;
+
+  } catch (error) {
+
+    console.log("Login error:", error);
+
+    throw error;
 
   }
 
+}
 
   // 🟢 Get Current User
   async getCurrentUser() {
